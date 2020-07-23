@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 #
 # Copyright © 2014 Alexey Dubkov
+# Copyright © 2020 Spearline
 #
 # This file is part of py-zabbix.
 #
@@ -182,12 +183,15 @@ class ZabbixSender(object):
                  use_config=None,
                  chunk_size=250,
                  socket_wrapper=None,
-                 timeout=10):
+                 timeout=10,
+                 mode="trapper"):
 
         self.chunk_size = chunk_size
         self.timeout = timeout
 
         self.socket_wrapper = socket_wrapper
+        self.mode = mode
+
         if use_config:
             self.zabbix_uri = self._load_from_config(use_config)
         else:
@@ -310,7 +314,11 @@ class ZabbixSender(object):
         """
 
         msg = ','.join(messages)
-        request = '{{"request":"sender data","data":[{msg}]}}'.format(msg=msg)
+        if self.mode == "active_check":
+            request_type = "agent data"
+        else:
+            request_type = "sender data"
+        request = '{{"request":"{request_type}","data":[{msg}]}}'.format(msg=msg, request_type=request_type)
         request = request.encode("utf-8")
         logger.debug('Request: %s', request)
 
